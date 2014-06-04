@@ -1,0 +1,16 @@
+{
+  "name": "benchmark-runner",
+  "version": "0.0.0",
+  "authors": [
+    "Rafael Weinstein <rafaelw@google.com>"
+  ],
+  "description": "TODO",
+  "keywords": [
+    "Polymer",
+    "Benchmark"
+  ],
+  "private": true,
+  "dependencies": {
+    "polymer": "Polymer/polymer",
+  }
+}

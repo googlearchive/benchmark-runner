@@ -1,0 +1,93 @@
+﻿<link rel="import" href="../polymer/polymer.html">
+
+<polymer-element name="benchmark-runner" attributes="variants times maxTime maxRuns" on-setupfinished="{{ setupFinished }}" on-runfinished="{{ runFinished">
+  <template>
+    <button on-click="{{ go }}">go</button>
+  </template>
+  <script>
+    (function(global) {
+      var INIT = 0;
+      var ESTIMATE = 1;
+      var TESTING = 2;
+      var hasForceGc = typeof global.gc === 'function';
+
+      Polymer('benchmark-runner', {
+        maxTime: 400,
+        maxRuns: 50,
+
+        ready: function() {
+          this.times = [];
+          this.results = [];
+        },
+        go: function() {
+          this.runBenchmark(this.querySelector('*'));
+        },
+        runBenchmark: function(benchmark) {
+          this.current = benchmark;
+          this.runSeries(INIT, 1);
+        },
+        runSeries: function(state, count) {
+          this.times.length = 0;
+          this.state = state;
+          this.runCount = count;
+          this.remaining = count;
+
+          this.runOne();
+        },
+        runOne: function(e) {
+          if (hasForceGc) {
+            global.gc();
+            global.gc();
+            global.gc();
+          }
+
+          this.fire('setup', undefined, this.current);
+        },
+        setupFinished: function() {
+          this.fire('run', undefined, this.current);
+        },
+        runFinished: function(e, detail) {
+          this.times.push(detail.totalTime);
+          this.remaining--;
+          if (this.remaining > 0) {
+            this.runOne();
+            return;
+          }
+
+          var total = 0;
+          for (var i = 0; i < this.times.length; i++) {
+            total += this.times[0];
+          }
+          console.log(this.times, duration);
+          var duration = Math.round(total / this.times.length);
+
+          switch (this.state) {
+            case INIT:
+              // Run the test twice to estimate its time.
+              this.runSeries(ESTIMATE, 2);
+              break;
+
+            case ESTIMATE:
+              // Run as many tests as will fit in maxTime.
+              var testingRuns =
+                  Math.min(Math.round(this.maxTime/duration), this.maxRuns);
+
+              if (testingRuns >= 4)
+                this.runSeries(TESTING, testingRuns);
+              else
+                this.variantComplete(duration);
+              break;
+            case TESTING:
+              this.variantComplete(duration);
+              break;
+          }
+        },
+        variantComplete: function(duration) {
+          this.results.push(duration);
+          alert('result: ' + duration + 'ms');
+        }
+      });
+    })(this);
+  </script>
+
+</polymer-element>
